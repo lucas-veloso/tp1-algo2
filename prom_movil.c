@@ -4,42 +4,67 @@
 /* ******************************************************************
  *                        PROGRAMA PRINCIPAL
  * *****************************************************************/
-void aux(int* arreglo, size_t i, size_t k, size_t n, double* suma);
+
+int* obtener_sumas(int* arreglo,size_t n){
+	int* vector = malloc(sizeof(int) * n);
+	int aux = 0;
+	for(size_t i=0;i<n;i++){
+		aux+=arreglo[i];
+		vector[i] = aux;
+	}
+	return vector;
+}
 
 double* obtener_promedio_movil(int* arreglo, size_t n, size_t k){
-	double* prom = 0;
-	double suma = 0;
-	for(size_t i=0;i<k;i++){
-		suma+= arreglo[i];
+	
+	int* vectar = obtener_sumas(arreglo,n);
+	double* vpmovil = calloc(sizeof(double), n);
+	int pmovil = 0;
+	double divisor = 0;
+		
+	for(size_t i=0;i<k;i++) divisor++; // casteo el valor de k a un double
+	if(n==k){
+		for(size_t i=0;i < n;i++) vpmovil[i] = vectar[n-1] / divisor;
 	}
-	if(k==n) return *suma / k;
-	for(int j=0;j<n;j++){
-		if(j-k>0) suma-=arreglo[j-k - 1];
-		if(j+k<n) suma+=arreglo[j+k];
-		if (suma > *prom) prom = &suma;
-	} 
-	return prom / k;
+	else{
+		for(size_t i=0;i < n;i++){
+		 	if(i < n - k){
+		 		if (divisor < 2 * k + 1){ 
+		 		divisor++;
+				pmovil = vectar[i+k];
+		 		}
+		 		else{
+		 		pmovil = vectar[i+k] - vectar[i-k-1];
+		 		}
+			}
+		 	else{	
+				if(i-k > 1000 && i+k>n){
+					printf("%zu\n", i - k);
+					pmovil = vectar[n-1];
+				}
+				else{	
+		 		divisor--;
+		 		pmovil = vectar[i] - vectar[i-k-1];
+				}
+		 	}	
+			vpmovil[i] = pmovil / divisor;
+		}
+	}
+	free(vectar);
+	return vpmovil;
 }
 
 
-// void aux(int* arreglo, size_t i, size_t k, size_t n, double* suma){
-// 	while(k>0)
-// 	{
-// 		if(i == 0) suma += arreglo[i+k];
-// 		else if(i == n) suma += arreglo[i-k];
-// 		else
-// 		{
-// 			suma += arreglo[i+k];
-// 			suma += arreglo[i-k];
-// 		}
-// 		aux(arreglo,i,k-1,n,suma);
-// 	}
-// 	suma+=arreglo[i];
-// 	return;
+
+
+
+
+// int main(void)
+// {
+// 	// int arr[6] = {1,3,12,6,17,9};
+// 	// double* vectar = obtener_promedio_movil(arr,6,4);
+// 	// for(size_t i = 0;i<6;i++){
+// 	// 	printf("%f\n",vectar[i]);
+// 	// }
+// 	// free(vectar);
 // }
-
-int main(void)
-{
-	// int arr[5] = {1,2,3,4,5};
-	// obtener_promedio_movil(arr,5,2);
-}

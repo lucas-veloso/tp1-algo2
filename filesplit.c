@@ -3,60 +3,73 @@
 #include <string.h>
 #include <stdlib.h>
 
-// char* obtener_nombre_archivo(char* noriginal, size_t n){
-//    char* fname = malloc(strlen(noriginal) + 1);
-//    char* narchivo = malloc(5);
-//    snprintf(narchivo,5,"%zu",n);
-//    if(!fname) return NULL;
-//    strcpy(fname,noriginal);
-//    strcat(fname,"_");
-//    strcat(fname,narchivo);
-//    return fname;
-// }
-
-// void print_col(char* line, int n,size_t mem,size_t longlinea){ 
-// 	if (longlinea - mem <= n){
-// 		printf("%s",line + mem);
-// 		return;
-// 	}
-//    	printf("%.*s\n",n,line + mem);   	  
-//    	print_col(line,n,mem + n,longlinea);
-// }
-
-
+char* obtener_nombre_archivo(char* noriginal, size_t n){
+   size_t tam = strlen(noriginal) + 6; // tamanio 
+   char* fname = calloc(tam,1);
+   if(!fname) return NULL;
+   snprintf(fname,tam,"%s_%04zu",noriginal,n);
+   return fname;
+}
 
 int main(int argc, char *argv[]){
    
    if (argc != 3) {
-       fprintf(stderr, "cantidad de argumentos argumentos incorrectos");
-       exit(EXIT_FAILURE);
+	   fprintf(stderr, "cantidad de argumentos argumentos incorrectos");
+	   exit(EXIT_FAILURE);
    }
 
-   int len2 = 0;
-   sscanf(argv[2],"%i",&len2);
+   size_t tamArchivo = 0;
+   sscanf(argv[2],"%zu",&tamArchivo);
 
-   if(len2==0){
-        fprintf(stderr, "el numero de caracteres por linea no puede ser 0");
- 	    exit(EXIT_FAILURE);
+
+   if(tamArchivo==0){
+		fprintf(stderr, "el numero de caracteres por linea no puede ser 0");
+		exit(EXIT_FAILURE);
    }
 
-   FILE *stream;   
+   FILE *stream;
+   FILE *destino = NULL;   
    stream = fopen(argv[1], "r");
    if (!stream) {
-       perror("fopen");
-       exit(EXIT_FAILURE);
+	   perror("fopen");
+	   exit(EXIT_FAILURE);
    }
 
-   char *line = NULL;
-   size_t len = 0;
+	size_t longLinea = 0;
+	size_t caracteresEscribidos = 0;
+	size_t numeroArchivosCreados = 0;
+	size_t aux = 0;
+	char* line = NULL;
+  	char* nombreArchivo = NULL;
 
-   while (getline(&line, &len, stream) != -1) {
-   	   // size_t longlinea = strlen(line);
-   	   line+=3;
-	   printf("%s",line); 
-	}
 
-free (line);
+	while (getline(&line, &longLinea, stream) != -1) {
+		size_t lenLinea = strlen(line);
+		// printf("longitud de linea :%zu, longitud de archivo: %zu\n",lenLinea,tamArchivo);
+		while ( aux < lenLinea ){
+			if(!destino){
+				nombreArchivo = obtener_nombre_archivo(argv[1],numeroArchivosCreados);
+				numeroArchivosCreados++;
+				destino = fopen(nombreArchivo,"a+");
+			}
+			if(lenLinea - aux < tamArchivo - caracteresEscribidos){
+				fwrite(line + aux,sizeof(char),lenLinea - aux,destino);
+				caracteresEscribidos += lenLinea - aux;
+				aux = lenLinea;
+			}
+			else{
+				fwrite(line + aux,sizeof(char),tamArchivo - caracteresEscribidos,destino);
+				aux += tamArchivo - caracteresEscribidos;
+				fclose(destino);
+				destino = NULL;
+				caracteresEscribidos = 0;
+			}
+		}
+		aux = 0;
+ 	}
+free(line);
 fclose(stream);
+if(destino) fclose(destino);
+if(nombreArchivo) free(nombreArchivo);
 exit(EXIT_SUCCESS);
 }
